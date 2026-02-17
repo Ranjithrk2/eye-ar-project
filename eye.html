@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Interactive Eye AR</title>
+
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+
+  <script>
+    function showInfo(text){
+      document.querySelector("#info").setAttribute("value", text);
+    }
+  </script>
+
+</head>
+
+<body style="margin:0; overflow:hidden;">
+
+<a-scene embedded arjs="sourceType: webcam; debugUIEnabled:false;">
+
+  <a-marker preset="hiro">
+
+    <!-- 3D Eye -->
+    <a-entity 
+      gltf-model="models/eye.glb"
+      scale="0.5 0.5 0.5"
+      rotation="0 0 0"
+      animation="property: rotation; to: 0 360 0; loop: true; dur: 8000">
+    </a-entity>
+
+
+    <!-- CLICKABLE AREAS -->
+
+    <!-- Cornea -->
+    <a-sphere 
+      radius="0.3"
+      position="0 0 0.6"
+      opacity="0"
+      class="clickable"
+      onclick="showInfo('Cornea: Transparent outer layer that protects the eye')">
+    </a-sphere>
+
+    <!-- Lens -->
+    <a-sphere 
+      radius="0.25"
+      position="0 0 0.2"
+      opacity="0"
+      class="clickable"
+      onclick="showInfo('Lens: Focuses light onto the retina')">
+    </a-sphere>
+
+    <!-- Retina -->
+    <a-sphere 
+      radius="0.5"
+      position="0 0 -0.2"
+      opacity="0"
+      class="clickable"
+      onclick="showInfo('Retina: Converts light into nerve signals')">
+    </a-sphere>
+
+
+    <!-- LABEL TEXT -->
+    <a-text 
+      id="info"
+      value="Tap Eye Parts"
+      position="0 1 0"
+      align="center"
+      color="yellow"
+      scale="2 2 2">
+    </a-text>
+
+
+    <!-- COMPANY -->
+    <a-text 
+      value="Provided by MR.TECHLAB LLP"
+      position="0 -1 0"
+      align="center"
+      color="cyan">
+    </a-text>
+
+  </a-marker>
+
+  <a-entity camera></a-entity>
+
+</a-scene>
+
+</body>
+</html>
