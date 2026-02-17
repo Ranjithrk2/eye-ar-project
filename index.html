@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>Futuristic AR Eye</title>
 
-  <!-- A-Frame and AR.js -->
+  <!-- A-Frame & AR.js -->
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
 
@@ -17,7 +17,6 @@
       text-shadow: 0 0 10px #0ff, 0 0 20px #0ff, 0 0 30px #0ff;
     }
 
-    /* Optional font import for futuristic style */
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
   </style>
 </head>
@@ -31,6 +30,7 @@
     <!-- Eye Model -->
     <a-entity
       id="eyeModel"
+      class="clickable"
       gltf-model="models/eye.glb"
       position="0 0 0"
       rotation="0 0 0"
@@ -45,10 +45,9 @@
       height="1.5"
       color="#000"
       opacity="0.8"
-      material="shader: flat; color:#000"
       visible="false"
-      radius="0.2"
-      ></a-plane>
+      radius="0.2">
+    </a-plane>
 
     <!-- Info Text -->
     <a-text
@@ -64,8 +63,14 @@
 
   </a-marker>
 
-  <!-- Camera -->
-  <a-entity camera></a-entity>
+  <!-- Camera with Cursor for Mobile & Desktop -->
+  <a-entity camera>
+    <a-cursor
+      fuse="false"
+      raycaster="objects: .clickable"
+      color="#0ff">
+    </a-cursor>
+  </a-entity>
 
 </a-scene>
 
@@ -97,7 +102,7 @@
     if(e.touches){
       previousX = e.touches[0].clientX;
       previousY = e.touches[0].clientY;
-    }else{
+    } else {
       previousX = e.clientX;
       previousY = e.clientY;
     }
@@ -122,7 +127,7 @@
     if(e.touches){
       currentX = e.touches[0].clientX;
       currentY = e.touches[0].clientY;
-    }else{
+    } else {
       currentX = e.clientX;
       currentY = e.clientY;
     }
@@ -133,19 +138,20 @@
     rotation.y += deltaX * 0.6;
     rotation.x += deltaY * 0.6;
     model.setAttribute("rotation", rotation);
+
     previousX = currentX;
     previousY = currentY;
   }
 
   function endDrag(){ isDragging = false; }
-  function getDistance(t1, t2){ 
+  function getDistance(t1, t2){
     let dx = t1.clientX - t2.clientX;
     let dy = t1.clientY - t2.clientY;
     return Math.sqrt(dx*dx + dy*dy);
   }
 
-  // ===== TAP TO SHOW INFO =====
-  model.addEventListener("click", () => {
+  // ===== TAP / CLICK HANDLER =====
+  function toggleInfo() {
     const isVisible = info.getAttribute("visible");
     info.setAttribute("visible", !isVisible);
     infoPanel.setAttribute("visible", !isVisible);
@@ -156,6 +162,15 @@
     } else {
       info.setAttribute("value", "Drag: Rotate | Pinch: Zoom | Tap: Info");
     }
+  }
+
+  // Desktop click
+  model.addEventListener("click", toggleInfo);
+
+  // Mobile touch
+  model.addEventListener("touchstart", (e) => {
+    e.preventDefault(); // Prevent scroll
+    toggleInfo();
   });
 
   // ===== MARKER DETECT =====
