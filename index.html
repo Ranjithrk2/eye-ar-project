@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Eye AR</title>
+  <title>Interactive Eye AR</title>
 
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
@@ -17,20 +17,19 @@
 
   <a-marker preset="hiro">
 
-    <!-- 3D Eye Model -->
+    <!-- 3D Model -->
     <a-entity
       id="eyeModel"
       gltf-model="models/eye.glb"
-      scale="2 2 2"
       position="0 0 0"
       rotation="0 0 0"
-      class="clickable">
+      scale="2 2 2">
     </a-entity>
 
-    <!-- Info Text -->
+    <!-- Info -->
     <a-text
-      id="infoText"
-      value="Tap the Eye"
+      id="info"
+      value="Move finger to rotate | Pinch to zoom"
       position="0 1.5 0"
       align="center"
       color="yellow"
@@ -39,8 +38,8 @@
 
     <!-- Company -->
     <a-text
-      value="MR.TECHLAB LLP"
-      position="0 -1.2 0"
+      value="Provided by MR.TECHLAB LLP"
+      position="0 -1.3 0"
       align="center"
       color="cyan">
     </a-text>
@@ -52,19 +51,16 @@
 </a-scene>
 
 <script>
+
 let model = document.querySelector("#eyeModel");
-let info = document.querySelector("#infoText");
+let info = document.querySelector("#info");
 
-
-// Show info on tap
-model.addEventListener("click", () => {
-  info.setAttribute("value", "Human Eye: Tap and drag to rotate");
-});
-
-
-// Drag rotation (mobile + mouse)
 let isDragging = false;
-let previousX;
+let previousX, previousY;
+let scale = 2;
+
+
+// ================= ROTATION =================
 
 window.addEventListener("mousedown", startDrag);
 window.addEventListener("touchstart", startDrag);
@@ -78,26 +74,102 @@ window.addEventListener("touchend", endDrag);
 
 function startDrag(e){
   isDragging = true;
-  previousX = e.touches ? e.touches[0].clientX : e.clientX;
+
+  if(e.touches){
+    previousX = e.touches[0].clientX;
+    previousY = e.touches[0].clientY;
+  }else{
+    previousX = e.clientX;
+    previousY = e.clientY;
+  }
 }
 
 function drag(e){
+
   if(!isDragging) return;
 
-  let currentX = e.touches ? e.touches[0].clientX : e.clientX;
-  let delta = currentX - previousX;
+  let currentX, currentY;
+
+  if(e.touches){
+    currentX = e.touches[0].clientX;
+    currentY = e.touches[0].clientY;
+  }else{
+    currentX = e.clientX;
+    currentY = e.clientY;
+  }
+
+  let deltaX = currentX - previousX;
+  let deltaY = currentY - previousY;
 
   let rotation = model.getAttribute("rotation");
-  rotation.y += delta * 0.5;
+
+  rotation.y += deltaX * 0.5; // left right
+  rotation.x += deltaY * 0.5; // up down
 
   model.setAttribute("rotation", rotation);
 
   previousX = currentX;
+  previousY = currentY;
 }
 
 function endDrag(){
   isDragging = false;
 }
+
+
+
+// ================= ZOOM =================
+
+window.addEventListener("wheel", (e)=>{
+
+  scale -= e.deltaY * 0.001;
+
+  if(scale < 1) scale = 1;
+  if(scale > 4) scale = 4;
+
+  model.setAttribute("scale", `${scale} ${scale} ${scale}`);
+
+});
+
+
+
+// ================= TAP INFO =================
+
+model.addEventListener("click", ()=>{
+
+  info.setAttribute("value", "Cornea • Iris • Lens • Retina");
+
+  speak("This is the human eye. It contains cornea, iris, lens and retina.");
+
+});
+
+
+
+// ================= VOICE =================
+
+function speak(text){
+
+  let speech = new SpeechSynthesisUtterance();
+
+  speech.text = text;
+  speech.rate = 0.9;
+  speech.pitch = 1;
+
+  window.speechSynthesis.speak(speech);
+
+}
+
+
+
+// Auto voice when marker detected
+
+document.querySelector("a-marker").addEventListener("markerFound", ()=>{
+
+  speak("Welcome. This is an augmented reality model of the human eye. You can rotate and zoom the model.");
+
+});
+
+
 </script>
 
 </body>
