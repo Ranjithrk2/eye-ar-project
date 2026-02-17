@@ -13,35 +13,25 @@
 
 <body>
 
-<a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+<a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;" vr-mode-ui="enabled: false">
 
-  <a-marker preset="hiro">
+  <a-marker preset="hiro" id="marker">
 
-    <!-- 3D Model -->
     <a-entity
       id="eyeModel"
       gltf-model="models/eye.glb"
       position="0 0 0"
       rotation="0 0 0"
-      scale="2 2 2">
+      scale="3 3 3">
     </a-entity>
 
-    <!-- Info -->
     <a-text
       id="info"
-      value="Move finger to rotate | Pinch to zoom"
-      position="0 1.5 0"
+      value="Drag: Rotate | Pinch: Zoom | Tap: Info"
+      position="0 1.8 0"
       align="center"
       color="yellow"
       scale="2 2 2">
-    </a-text>
-
-    <!-- Company -->
-    <a-text
-      value="Provided by MR.TECHLAB LLP"
-      position="0 -1.3 0"
-      align="center"
-      color="cyan">
     </a-text>
 
   </a-marker>
@@ -50,29 +40,38 @@
 
 </a-scene>
 
+
 <script>
 
-let model = document.querySelector("#eyeModel");
-let info = document.querySelector("#info");
+const model = document.querySelector("#eyeModel");
+const info = document.querySelector("#info");
 
 let isDragging = false;
-let previousX, previousY;
-let scale = 2;
+let previousX = 0;
+let previousY = 0;
+
+let scale = 3;
+let startDistance = 0;
 
 
-// ================= ROTATION =================
+// ================= ROTATE =================
 
 window.addEventListener("mousedown", startDrag);
-window.addEventListener("touchstart", startDrag);
-
 window.addEventListener("mousemove", drag);
-window.addEventListener("touchmove", drag);
-
 window.addEventListener("mouseup", endDrag);
+
+window.addEventListener("touchstart", startDrag, { passive:false });
+window.addEventListener("touchmove", drag, { passive:false });
 window.addEventListener("touchend", endDrag);
 
 
 function startDrag(e){
+
+  if(e.touches && e.touches.length === 2){
+    startDistance = getDistance(e.touches[0], e.touches[1]);
+    return;
+  }
+
   isDragging = true;
 
   if(e.touches){
@@ -84,7 +83,28 @@ function startDrag(e){
   }
 }
 
+
 function drag(e){
+
+  e.preventDefault();
+
+  // PINCH ZOOM
+  if(e.touches && e.touches.length === 2){
+
+    let newDistance = getDistance(e.touches[0], e.touches[1]);
+
+    let diff = newDistance - startDistance;
+
+    scale += diff * 0.01;
+
+    if(scale < 1.5) scale = 1.5;
+    if(scale > 6) scale = 6;
+
+    model.setAttribute("scale", `${scale} ${scale} ${scale}`);
+
+    startDistance = newDistance;
+    return;
+  }
 
   if(!isDragging) return;
 
@@ -103,8 +123,8 @@ function drag(e){
 
   let rotation = model.getAttribute("rotation");
 
-  rotation.y += deltaX * 0.5; // left right
-  rotation.x += deltaY * 0.5; // up down
+  rotation.y += deltaX * 0.6;
+  rotation.x += deltaY * 0.6;
 
   model.setAttribute("rotation", rotation);
 
@@ -112,63 +132,88 @@ function drag(e){
   previousY = currentY;
 }
 
+
 function endDrag(){
   isDragging = false;
 }
 
 
+function getDistance(t1, t2){
 
-// ================= ZOOM =================
+  let dx = t1.clientX - t2.clientX;
+  let dy = t1.clientY - t2.clientY;
 
-window.addEventListener("wheel", (e)=>{
-
-  scale -= e.deltaY * 0.001;
-
-  if(scale < 1) scale = 1;
-  if(scale > 4) scale = 4;
-
-  model.setAttribute("scale", `${scale} ${scale} ${scale}`);
-
-});
-
-
-
-// ================= TAP INFO =================
-
-model.addEventListener("click", ()=>{
-
-  info.setAttribute("value", "Cornea • Iris • Lens • Retina");
-
-  speak("This is the human eye. It contains cornea, iris, lens and retina.");
-
-});
-
-
-
-// ================= VOICE =================
-
-function speak(text){
-
-  let speech = new SpeechSynthesisUtterance();
-
-  speech.text = text;
-  speech.rate = 0.9;
-  speech.pitch = 1;
-
-  window.speechSynthesis.speak(speech);
-
+  return Math.sqrt(dx*dx + dy*dy);
 }
 
 
 
-// Auto voice when marker detected
+// ================= CLICK INFO =================
 
-document.querySelector("a-marker").addEventListener("markerFound", ()=>{
+model.addEventListener("click", ()=>{
 
-  speak("Welcome. This is an augmented reality model of the human eye. You can rotate and zoom the model.");
+  info.setAttribute("value", "Cornea • Iris • Lens • Retina • Optic Nerve");
+
+  speak(detailedInfo());
 
 });
 
+
+
+// ================= MARKER DETECT =================
+
+document.querySelector("#marker").addEventListener("markerFound", ()=>{
+
+  speak(introInfo());
+
+});
+
+
+
+// ================= VOICE FUNCTIONS =================
+
+function introInfo(){
+
+  return `Welcome. This is an augmented reality model of the human eye.
+  The human eye is a complex sensory organ responsible for vision.
+  You can rotate the model using one finger and zoom using two fingers.
+  Tap on the eye to learn more details.`;
+
+}
+
+
+function detailedInfo(){
+
+  return `The human eye has several important parts.
+
+  The cornea is the transparent front surface that helps focus incoming light.
+
+  The iris is the colored part of the eye. It controls the size of the pupil and regulates how much light enters.
+
+  The lens is located behind the iris and focuses light onto the retina.
+
+  The retina is a light sensitive layer at the back of the eye that converts light into electrical signals.
+
+  These signals travel through the optic nerve to the brain, where images are formed.
+
+  The eye works together with the brain to allow us to see colors, depth, and movement.`;
+
+}
+
+
+function speak(message){
+
+  window.speechSynthesis.cancel();
+
+  let speech = new SpeechSynthesisUtterance(message);
+
+  speech.rate = 0.9;
+  speech.pitch = 1;
+  speech.volume = 1;
+
+  window.speechSynthesis.speak(speech);
+
+}
 
 </script>
 
