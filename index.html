@@ -1,22 +1,34 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Interactive Eye AR</title>
+  <meta charset="UTF-8">
+  <title>Futuristic AR Eye</title>
 
+  <!-- A-Frame and AR.js -->
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
 
+  <!-- Futuristic CSS -->
   <style>
-    body { margin:0; overflow:hidden; }
+    body { margin:0; overflow:hidden; background:#0a0a0a; font-family: 'Orbitron', sans-serif; }
+
+    /* Neon glow for text */
+    a-text {
+      text-shadow: 0 0 10px #0ff, 0 0 20px #0ff, 0 0 30px #0ff;
+    }
+
+    /* Optional font import for futuristic style */
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
   </style>
 </head>
-
 <body>
 
 <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;" vr-mode-ui="enabled: false">
 
+  <!-- Marker -->
   <a-marker preset="hiro" id="marker">
 
+    <!-- Eye Model -->
     <a-entity
       id="eyeModel"
       gltf-model="models/eye.glb"
@@ -25,196 +37,157 @@
       scale="3 3 3">
     </a-entity>
 
+    <!-- Info Panel Background -->
+    <a-plane
+      id="infoPanel"
+      position="0 1.5 0"
+      width="3"
+      height="1.5"
+      color="#000"
+      opacity="0.8"
+      material="shader: flat; color:#000"
+      visible="false"
+      radius="0.2"
+      ></a-plane>
+
+    <!-- Info Text -->
     <a-text
       id="info"
       value="Drag: Rotate | Pinch: Zoom | Tap: Info"
-      position="0 1.8 0"
+      position="0 1.5 0.01"
       align="center"
-      color="yellow"
-      scale="2 2 2">
+      color="#0ff"
+      wrap-count="40"
+      scale="1.5 1.5 1.5"
+      visible="false">
     </a-text>
 
   </a-marker>
 
+  <!-- Camera -->
   <a-entity camera></a-entity>
 
 </a-scene>
 
-
 <script>
+  const model = document.querySelector("#eyeModel");
+  const info = document.querySelector("#info");
+  const infoPanel = document.querySelector("#infoPanel");
 
-const model = document.querySelector("#eyeModel");
-const info = document.querySelector("#info");
+  let isDragging = false;
+  let previousX = 0;
+  let previousY = 0;
+  let scale = 3;
+  let startDistance = 0;
 
-let isDragging = false;
-let previousX = 0;
-let previousY = 0;
+  // ===== ROTATE & PINCH ZOOM =====
+  window.addEventListener("mousedown", startDrag);
+  window.addEventListener("mousemove", drag);
+  window.addEventListener("mouseup", endDrag);
+  window.addEventListener("touchstart", startDrag, { passive:false });
+  window.addEventListener("touchmove", drag, { passive:false });
+  window.addEventListener("touchend", endDrag);
 
-let scale = 3;
-let startDistance = 0;
-
-
-// ================= ROTATE =================
-
-window.addEventListener("mousedown", startDrag);
-window.addEventListener("mousemove", drag);
-window.addEventListener("mouseup", endDrag);
-
-window.addEventListener("touchstart", startDrag, { passive:false });
-window.addEventListener("touchmove", drag, { passive:false });
-window.addEventListener("touchend", endDrag);
-
-
-function startDrag(e){
-
-  if(e.touches && e.touches.length === 2){
-    startDistance = getDistance(e.touches[0], e.touches[1]);
-    return;
+  function startDrag(e){
+    if(e.touches && e.touches.length === 2){
+      startDistance = getDistance(e.touches[0], e.touches[1]);
+      return;
+    }
+    isDragging = true;
+    if(e.touches){
+      previousX = e.touches[0].clientX;
+      previousY = e.touches[0].clientY;
+    }else{
+      previousX = e.clientX;
+      previousY = e.clientY;
+    }
   }
 
-  isDragging = true;
+  function drag(e){
+    e.preventDefault();
 
-  if(e.touches){
-    previousX = e.touches[0].clientX;
-    previousY = e.touches[0].clientY;
-  }else{
-    previousX = e.clientX;
-    previousY = e.clientY;
-  }
-}
+    // PINCH ZOOM
+    if(e.touches && e.touches.length === 2){
+      let newDistance = getDistance(e.touches[0], e.touches[1]);
+      let diff = newDistance - startDistance;
+      scale += diff * 0.01;
+      scale = Math.min(Math.max(scale, 1.5), 6);
+      model.setAttribute("scale", `${scale} ${scale} ${scale}`);
+      startDistance = newDistance;
+      return;
+    }
 
+    if(!isDragging) return;
+    let currentX, currentY;
+    if(e.touches){
+      currentX = e.touches[0].clientX;
+      currentY = e.touches[0].clientY;
+    }else{
+      currentX = e.clientX;
+      currentY = e.clientY;
+    }
 
-function drag(e){
-
-  e.preventDefault();
-
-  // PINCH ZOOM
-  if(e.touches && e.touches.length === 2){
-
-    let newDistance = getDistance(e.touches[0], e.touches[1]);
-
-    let diff = newDistance - startDistance;
-
-    scale += diff * 0.01;
-
-    if(scale < 1.5) scale = 1.5;
-    if(scale > 6) scale = 6;
-
-    model.setAttribute("scale", `${scale} ${scale} ${scale}`);
-
-    startDistance = newDistance;
-    return;
-  }
-
-  if(!isDragging) return;
-
-  let currentX, currentY;
-
-  if(e.touches){
-    currentX = e.touches[0].clientX;
-    currentY = e.touches[0].clientY;
-  }else{
-    currentX = e.clientX;
-    currentY = e.clientY;
+    let deltaX = currentX - previousX;
+    let deltaY = currentY - previousY;
+    let rotation = model.getAttribute("rotation");
+    rotation.y += deltaX * 0.6;
+    rotation.x += deltaY * 0.6;
+    model.setAttribute("rotation", rotation);
+    previousX = currentX;
+    previousY = currentY;
   }
 
-  let deltaX = currentX - previousX;
-  let deltaY = currentY - previousY;
+  function endDrag(){ isDragging = false; }
+  function getDistance(t1, t2){ 
+    let dx = t1.clientX - t2.clientX;
+    let dy = t1.clientY - t2.clientY;
+    return Math.sqrt(dx*dx + dy*dy);
+  }
 
-  let rotation = model.getAttribute("rotation");
+  // ===== TAP TO SHOW INFO =====
+  model.addEventListener("click", () => {
+    const isVisible = info.getAttribute("visible");
+    info.setAttribute("visible", !isVisible);
+    infoPanel.setAttribute("visible", !isVisible);
 
-  rotation.y += deltaX * 0.6;
-  rotation.x += deltaY * 0.6;
+    if(!isVisible){
+      info.setAttribute("value", detailedInfo());
+      speak(detailedInfo());
+    } else {
+      info.setAttribute("value", "Drag: Rotate | Pinch: Zoom | Tap: Info");
+    }
+  });
 
-  model.setAttribute("rotation", rotation);
+  // ===== MARKER DETECT =====
+  document.querySelector("#marker").addEventListener("markerFound", ()=>{
+    speak(introInfo());
+  });
 
-  previousX = currentX;
-  previousY = currentY;
-}
+  // ===== SPEECH FUNCTIONS =====
+  function introInfo(){
+    return `Welcome. This is an augmented reality model of the human eye.
+    The human eye is a complex sensory organ responsible for vision.
+    You can rotate the model using one finger and zoom using two fingers.
+    Tap on the eye to learn more details.`;
+  }
 
+  function detailedInfo(){
+    return `The human eye has several important parts.
+    The cornea is the transparent front surface that helps focus light.
+    The iris is the colored part of the eye, controlling the pupil size.
+    The lens focuses light onto the retina.
+    The retina converts light into electrical signals.
+    Signals travel through the optic nerve to the brain to form images.`;
+  }
 
-function endDrag(){
-  isDragging = false;
-}
-
-
-function getDistance(t1, t2){
-
-  let dx = t1.clientX - t2.clientX;
-  let dy = t1.clientY - t2.clientY;
-
-  return Math.sqrt(dx*dx + dy*dy);
-}
-
-
-
-// ================= CLICK INFO =================
-
-model.addEventListener("click", ()=>{
-
-  info.setAttribute("value", "Cornea • Iris • Lens • Retina • Optic Nerve");
-
-  speak(detailedInfo());
-
-});
-
-
-
-// ================= MARKER DETECT =================
-
-document.querySelector("#marker").addEventListener("markerFound", ()=>{
-
-  speak(introInfo());
-
-});
-
-
-
-// ================= VOICE FUNCTIONS =================
-
-function introInfo(){
-
-  return `Welcome. This is an augmented reality model of the human eye.
-  The human eye is a complex sensory organ responsible for vision.
-  You can rotate the model using one finger and zoom using two fingers.
-  Tap on the eye to learn more details.`;
-
-}
-
-
-function detailedInfo(){
-
-  return `The human eye has several important parts.
-
-  The cornea is the transparent front surface that helps focus incoming light.
-
-  The iris is the colored part of the eye. It controls the size of the pupil and regulates how much light enters.
-
-  The lens is located behind the iris and focuses light onto the retina.
-
-  The retina is a light sensitive layer at the back of the eye that converts light into electrical signals.
-
-  These signals travel through the optic nerve to the brain, where images are formed.
-
-  The eye works together with the brain to allow us to see colors, depth, and movement.`;
-
-}
-
-
-function speak(message){
-
-  window.speechSynthesis.cancel();
-
-  let speech = new SpeechSynthesisUtterance(message);
-
-  speech.rate = 0.9;
-  speech.pitch = 1;
-  speech.volume = 1;
-
-  window.speechSynthesis.speak(speech);
-
-}
-
+  function speak(message){
+    window.speechSynthesis.cancel();
+    let speech = new SpeechSynthesisUtterance(message);
+    speech.rate = 0.9;
+    speech.pitch = 1;
+    speech.volume = 1;
+    window.speechSynthesis.speak(speech);
+  }
 </script>
 
 </body>
