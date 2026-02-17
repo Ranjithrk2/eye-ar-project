@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Futuristic AR Eye</title>
+  <title>Interactive AR Eye Learning</title>
 
   <!-- A-Frame & AR.js -->
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
@@ -11,12 +11,7 @@
   <!-- Futuristic CSS -->
   <style>
     body { margin:0; overflow:hidden; background:#0a0a0a; font-family: 'Orbitron', sans-serif; }
-
-    /* Neon glow for text */
-    a-text {
-      text-shadow: 0 0 10px #0ff, 0 0 20px #0ff, 0 0 30px #0ff;
-    }
-
+    a-text { text-shadow: 0 0 10px #0ff, 0 0 20px #0ff, 0 0 30px #0ff; }
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
   </style>
 </head>
@@ -27,174 +22,86 @@
   <!-- Marker -->
   <a-marker preset="hiro" id="marker">
 
-    <!-- Eye Model -->
+    <!-- Center 3D Eye -->
     <a-entity
       id="eyeModel"
-      class="clickable"
       gltf-model="models/eye.glb"
       position="0 0 0"
       rotation="0 0 0"
       scale="3 3 3">
     </a-entity>
 
-    <!-- Info Panel Background -->
-    <a-plane
-      id="infoPanel"
-      position="0 1.5 0"
-      width="3"
-      height="1.5"
-      color="#000"
-      opacity="0.8"
-      visible="false"
-      radius="0.2">
-    </a-plane>
+    <!-- Sidebar / Floating Buttons for Eye Parts -->
+    <a-entity id="eyeParts">
 
-    <!-- Info Text -->
-    <a-text
-      id="info"
-      value="Drag: Rotate | Pinch: Zoom | Tap: Info"
-      position="0 1.5 0.01"
-      align="center"
-      color="#0ff"
-      wrap-count="40"
-      scale="1.5 1.5 1.5"
-      visible="false">
-    </a-text>
+      <!-- Cornea Button -->
+      <a-box id="corneaBtn" class="partBtn clickable"
+        position="-1 0.5 0"
+        depth="0.1" height="0.3" width="0.8"
+        color="#0ff" opacity="0.6">
+        <a-text value="Cornea" align="center" color="#000" position="0 0 0.06" width="2"></a-text>
+      </a-box>
+
+      <!-- Iris Button -->
+      <a-box id="irisBtn" class="partBtn clickable"
+        position="1 0.5 0"
+        depth="0.1" height="0.3" width="0.8"
+        color="#0ff" opacity="0.6">
+        <a-text value="Iris" align="center" color="#000" position="0 0 0.06" width="2"></a-text>
+      </a-box>
+
+      <!-- Lens Button -->
+      <a-box id="lensBtn" class="partBtn clickable"
+        position="-1 -0.5 0"
+        depth="0.1" height="0.3" width="0.8"
+        color="#0ff" opacity="0.6">
+        <a-text value="Lens" align="center" color="#000" position="0 0 0.06" width="2"></a-text>
+      </a-box>
+
+      <!-- Retina Button -->
+      <a-box id="retinaBtn" class="partBtn clickable"
+        position="1 -0.5 0"
+        depth="0.1" height="0.3" width="0.8"
+        color="#0ff" opacity="0.6">
+        <a-text value="Retina" align="center" color="#000" position="0 0 0.06" width="2"></a-text>
+      </a-box>
+
+      <!-- Optic Nerve Button -->
+      <a-box id="opticBtn" class="partBtn clickable"
+        position="0 -1 0"
+        depth="0.1" height="0.3" width="1.2"
+        color="#0ff" opacity="0.6">
+        <a-text value="Optic Nerve" align="center" color="#000" position="0 0 0.06" width="3"></a-text>
+      </a-box>
+
+    </a-entity>
+
+    <!-- Info Panel -->
+    <a-plane id="infoPanel" position="0 1.8 0" width="3" height="1.5" color="#000" opacity="0.8" visible="false"></a-plane>
+    <a-text id="infoText" position="0 1.8 0.01" align="center" color="#0ff" wrap-count="40" scale="1.5 1.5 1.5" visible="false"></a-text>
 
   </a-marker>
 
-  <!-- Camera with Cursor for Mobile & Desktop -->
+  <!-- Camera + cursor for mobile -->
   <a-entity camera>
-    <a-cursor
-      fuse="false"
-      raycaster="objects: .clickable"
-      color="#0ff">
-    </a-cursor>
+    <a-cursor fuse="false" raycaster="objects: .clickable" color="#0ff"></a-cursor>
   </a-entity>
 
 </a-scene>
 
 <script>
-  const model = document.querySelector("#eyeModel");
-  const info = document.querySelector("#info");
   const infoPanel = document.querySelector("#infoPanel");
+  const infoText = document.querySelector("#infoText");
 
-  let isDragging = false;
-  let previousX = 0;
-  let previousY = 0;
-  let scale = 3;
-  let startDistance = 0;
+  const partsInfo = {
+    "corneaBtn": "Cornea: The transparent front surface that helps focus incoming light.",
+    "irisBtn": "Iris: The colored part of the eye that controls pupil size.",
+    "lensBtn": "Lens: Focuses light onto the retina.",
+    "retinaBtn": "Retina: Converts light into electrical signals.",
+    "opticBtn": "Optic Nerve: Transmits signals from retina to brain."
+  };
 
-  // ===== ROTATE & PINCH ZOOM =====
-  window.addEventListener("mousedown", startDrag);
-  window.addEventListener("mousemove", drag);
-  window.addEventListener("mouseup", endDrag);
-  window.addEventListener("touchstart", startDrag, { passive:false });
-  window.addEventListener("touchmove", drag, { passive:false });
-  window.addEventListener("touchend", endDrag);
-
-  function startDrag(e){
-    if(e.touches && e.touches.length === 2){
-      startDistance = getDistance(e.touches[0], e.touches[1]);
-      return;
-    }
-    isDragging = true;
-    if(e.touches){
-      previousX = e.touches[0].clientX;
-      previousY = e.touches[0].clientY;
-    } else {
-      previousX = e.clientX;
-      previousY = e.clientY;
-    }
-  }
-
-  function drag(e){
-    e.preventDefault();
-
-    // PINCH ZOOM
-    if(e.touches && e.touches.length === 2){
-      let newDistance = getDistance(e.touches[0], e.touches[1]);
-      let diff = newDistance - startDistance;
-      scale += diff * 0.01;
-      scale = Math.min(Math.max(scale, 1.5), 6);
-      model.setAttribute("scale", `${scale} ${scale} ${scale}`);
-      startDistance = newDistance;
-      return;
-    }
-
-    if(!isDragging) return;
-    let currentX, currentY;
-    if(e.touches){
-      currentX = e.touches[0].clientX;
-      currentY = e.touches[0].clientY;
-    } else {
-      currentX = e.clientX;
-      currentY = e.clientY;
-    }
-
-    let deltaX = currentX - previousX;
-    let deltaY = currentY - previousY;
-    let rotation = model.getAttribute("rotation");
-    rotation.y += deltaX * 0.6;
-    rotation.x += deltaY * 0.6;
-    model.setAttribute("rotation", rotation);
-
-    previousX = currentX;
-    previousY = currentY;
-  }
-
-  function endDrag(){ isDragging = false; }
-  function getDistance(t1, t2){
-    let dx = t1.clientX - t2.clientX;
-    let dy = t1.clientY - t2.clientY;
-    return Math.sqrt(dx*dx + dy*dy);
-  }
-
-  // ===== TAP / CLICK HANDLER =====
-  function toggleInfo() {
-    const isVisible = info.getAttribute("visible");
-    info.setAttribute("visible", !isVisible);
-    infoPanel.setAttribute("visible", !isVisible);
-
-    if(!isVisible){
-      info.setAttribute("value", detailedInfo());
-      speak(detailedInfo());
-    } else {
-      info.setAttribute("value", "Drag: Rotate | Pinch: Zoom | Tap: Info");
-    }
-  }
-
-  // Desktop click
-  model.addEventListener("click", toggleInfo);
-
-  // Mobile touch
-  model.addEventListener("touchstart", (e) => {
-    e.preventDefault(); // Prevent scroll
-    toggleInfo();
-  });
-
-  // ===== MARKER DETECT =====
-  document.querySelector("#marker").addEventListener("markerFound", ()=>{
-    speak(introInfo());
-  });
-
-  // ===== SPEECH FUNCTIONS =====
-  function introInfo(){
-    return `Welcome. This is an augmented reality model of the human eye.
-    The human eye is a complex sensory organ responsible for vision.
-    You can rotate the model using one finger and zoom using two fingers.
-    Tap on the eye to learn more details.`;
-  }
-
-  function detailedInfo(){
-    return `The human eye has several important parts.
-    The cornea is the transparent front surface that helps focus light.
-    The iris is the colored part of the eye, controlling the pupil size.
-    The lens focuses light onto the retina.
-    The retina converts light into electrical signals.
-    Signals travel through the optic nerve to the brain to form images.`;
-  }
-
+  // Speak function
   function speak(message){
     window.speechSynthesis.cancel();
     let speech = new SpeechSynthesisUtterance(message);
@@ -203,7 +110,31 @@
     speech.volume = 1;
     window.speechSynthesis.speak(speech);
   }
-</script>
 
+  // Click/touch handler for each part
+  Object.keys(partsInfo).forEach(id => {
+    const part = document.querySelector("#"+id);
+    part.addEventListener("click", () => showPartInfo(id));
+    part.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      showPartInfo(id);
+    });
+  });
+
+  function showPartInfo(id){
+    const message = partsInfo[id];
+    infoPanel.setAttribute("visible", true);
+    infoText.setAttribute("visible", true);
+    infoText.setAttribute("value", message);
+    speak(message);
+  }
+
+  // Hide info when marker is lost (optional)
+  document.querySelector("#marker").addEventListener("markerLost", ()=>{
+    infoPanel.setAttribute("visible", false);
+    infoText.setAttribute("visible", false);
+  });
+
+</script>
 </body>
 </html>
