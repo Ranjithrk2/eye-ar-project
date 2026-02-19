@@ -33,6 +33,7 @@ body{
             scale="2 2 2">
 
       <a-entity
+        id="eyeModel"
         gltf-model="models/eye.glb"
         position="0 0 0"
         rotation="0 0 0">
@@ -42,7 +43,6 @@ body{
 
 </a-marker>
 
-<!-- CAMERA WITHOUT CURSOR -->
 <a-entity camera></a-entity>
 
 </a-scene>
@@ -51,24 +51,23 @@ body{
 <script>
 
 //////////////////////////////////////////////////
-// VOICE EXPLANATION ABOUT HUMAN EYE
+// VOICE EXPLANATION
 //////////////////////////////////////////////////
 
 const explanation =
-"The human eye is a complex and important sensory organ that allows us to see the world around us. " +
-"Light first enters through the cornea, which is the transparent front surface of the eye. " +
-"The iris controls the size of the pupil and regulates how much light enters. " +
-"Behind the pupil, the lens focuses light onto the retina at the back of the eye. " +
-"The retina converts light into electrical signals that travel through the optic nerve to the brain. " +
-"The brain then processes these signals to create the images we see. " +
-"The human eye works very similar to a camera, capturing and focusing light to produce vision.";
-
+"The human eye is a complex sensory organ that allows us to see. " +
+"Light enters through the cornea. The iris controls the pupil size. " +
+"The lens focuses light onto the retina. " +
+"The retina converts light into electrical signals. " +
+"These signals travel through the optic nerve to the brain. " +
+"The brain processes them to create vision.";
 
 function speak(){
 
   if(!('speechSynthesis' in window)) return;
 
   const msg = new SpeechSynthesisUtterance(explanation);
+
   msg.rate = 0.9;
   msg.pitch = 1;
   msg.volume = 1;
@@ -80,13 +79,15 @@ function speak(){
 
 // Speak when marker detected
 document.querySelector("#marker").addEventListener("markerFound", ()=>{
+
   speak();
+
 });
 
 
 
 //////////////////////////////////////////////////
-// ROTATE + ZOOM CONTROLS
+// ROTATE + ZOOM SYSTEM (IMPROVED)
 //////////////////////////////////////////////////
 
 const container = document.getElementById("modelContainer");
@@ -95,23 +96,27 @@ let isDragging = false;
 let previousX = 0;
 let previousY = 0;
 let currentScale = 2;
+let startDistance = null;
 
 
 // TOUCH START
 document.addEventListener("touchstart", (e)=>{
 
   if(e.touches.length === 1){
+
     isDragging = true;
     previousX = e.touches[0].clientX;
     previousY = e.touches[0].clientY;
+
   }
 
 });
 
 
-// TOUCH MOVE ROTATE
+// TOUCH MOVE
 document.addEventListener("touchmove", (e)=>{
 
+  // ROTATE
   if(isDragging && e.touches.length === 1){
 
     let deltaX = e.touches[0].clientX - previousX;
@@ -126,23 +131,10 @@ document.addEventListener("touchmove", (e)=>{
 
     previousX = e.touches[0].clientX;
     previousY = e.touches[0].clientY;
+
   }
 
-});
-
-
-// TOUCH END
-document.addEventListener("touchend", ()=>{
-  isDragging = false;
-});
-
-
-
-// PINCH ZOOM
-let initialDistance = null;
-
-document.addEventListener("touchmove", (e)=>{
-
+  // ZOOM
   if(e.touches.length === 2){
 
     let dx = e.touches[0].clientX - e.touches[1].clientX;
@@ -150,20 +142,22 @@ document.addEventListener("touchmove", (e)=>{
 
     let distance = Math.sqrt(dx*dx + dy*dy);
 
-    if(initialDistance === null){
-      initialDistance = distance;
+    if(startDistance === null){
+
+      startDistance = distance;
+
     }else{
 
-      let scaleChange = distance / initialDistance;
+      let diff = distance - startDistance;
 
-      currentScale = currentScale * scaleChange;
+      currentScale += diff * 0.01;
 
       currentScale = Math.min(Math.max(currentScale, 1), 5);
 
       container.setAttribute("scale",
         `${currentScale} ${currentScale} ${currentScale}`);
 
-      initialDistance = distance;
+      startDistance = distance;
     }
 
   }
@@ -171,8 +165,12 @@ document.addEventListener("touchmove", (e)=>{
 });
 
 
+// TOUCH END
 document.addEventListener("touchend", ()=>{
-  initialDistance = null;
+
+  isDragging = false;
+  startDistance = null;
+
 });
 
 </script>
