@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>AR Eye Learning</title>
+<title>AR Human Eye</title>
 
 <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
 <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
@@ -29,14 +29,16 @@ body{
 
   <!-- MODEL CONTAINER -->
   <a-entity id="modelContainer"
+            position="0 0 0"
             rotation="0 0 0"
-            scale="2 2 2">
+            scale="5 5 5">
 
       <a-entity
         id="eyeModel"
         gltf-model="models/eye.glb"
         position="0 0 0"
-        rotation="0 0 0">
+        rotation="0 180 0"
+        scale="1 1 1">
       </a-entity>
 
   </a-entity>
@@ -51,16 +53,17 @@ body{
 <script>
 
 //////////////////////////////////////////////////
-// VOICE EXPLANATION
+// VOICE EXPLANATION ABOUT HUMAN EYE
 //////////////////////////////////////////////////
 
 const explanation =
-"The human eye is a complex sensory organ that allows us to see. " +
+"The human eye is a complex sensory organ that allows us to see the world around us. " +
 "Light enters through the cornea. The iris controls the pupil size. " +
 "The lens focuses light onto the retina. " +
 "The retina converts light into electrical signals. " +
 "These signals travel through the optic nerve to the brain. " +
-"The brain processes them to create vision.";
+"The brain processes them to create the images we see.";
+
 
 function speak(){
 
@@ -79,15 +82,12 @@ function speak(){
 
 // Speak when marker detected
 document.querySelector("#marker").addEventListener("markerFound", ()=>{
-
   speak();
-
 });
 
 
-
 //////////////////////////////////////////////////
-// ROTATE + ZOOM SYSTEM (IMPROVED)
+// ROTATE + ZOOM CONTROLS
 //////////////////////////////////////////////////
 
 const container = document.getElementById("modelContainer");
@@ -95,7 +95,7 @@ const container = document.getElementById("modelContainer");
 let isDragging = false;
 let previousX = 0;
 let previousY = 0;
-let currentScale = 2;
+let currentScale = 5;
 let startDistance = null;
 
 
@@ -152,7 +152,7 @@ document.addEventListener("touchmove", (e)=>{
 
       currentScale += diff * 0.01;
 
-      currentScale = Math.min(Math.max(currentScale, 1), 5);
+      currentScale = Math.min(Math.max(currentScale, 1), 20);
 
       container.setAttribute("scale",
         `${currentScale} ${currentScale} ${currentScale}`);
