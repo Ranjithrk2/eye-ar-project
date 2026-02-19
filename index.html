@@ -47,17 +47,17 @@ button{
 <body>
 
 <div class="controls">
-    <button onclick="playEnglish()">English Voice</button>
-    <button onclick="playKannada()">Kannada Voice</button>
+    <button onclick="playEnglish()">English</button>
+    <button onclick="playKannada()">Kannada</button>
 </div>
 
 <div id="info">
-📱 Tap screen once → Point camera at HIRO marker
+👉 Tap once anywhere → Point camera at HIRO marker
 </div>
 
-<!-- AUDIO FILES -->
-<audio id="audioEN" src="audio/eye_en.mp3"></audio>
-<audio id="audioKN" src="audio/eye_kn.mp3"></audio>
+<!-- AUDIO -->
+<audio id="audioEN" src="audio/eye_en.mp3" preload="auto"></audio>
+<audio id="audioKN" src="audio/eye_kn.mp3" preload="auto"></audio>
 
 <a-scene
 embedded
@@ -92,42 +92,73 @@ arjs="sourceType: webcam; debugUIEnabled: false;"
 
 <script>
 
-// ================= AUDIO =================
+// ================= AUDIO SYSTEM =================
 
 let audioUnlocked = false;
+let currentLanguage = "kn"; // default Kannada (change to "en" if needed)
 
 const audioEN = document.getElementById("audioEN");
 const audioKN = document.getElementById("audioKN");
 
 function unlockAudio(){
-    audioUnlocked = true;
+
+    // Play silent sound to unlock audio
+    audioEN.volume = 0;
+    audioEN.play().then(()=>{
+        audioEN.pause();
+        audioEN.currentTime = 0;
+        audioEN.volume = 1;
+        audioUnlocked = true;
+        console.log("Audio unlocked");
+    }).catch(()=>{});
+
 }
 
 // unlock on first tap
 document.body.addEventListener("click", unlockAudio, { once:true });
 
+
 function playEnglish(){
-    if(!audioUnlocked) return;
-    audioKN.pause();
-    audioEN.currentTime = 0;
-    audioEN.play();
+    currentLanguage = "en";
+    playAudio();
 }
 
 function playKannada(){
-    if(!audioUnlocked) return;
-    audioEN.pause();
-    audioKN.currentTime = 0;
-    audioKN.play();
+    currentLanguage = "kn";
+    playAudio();
 }
 
 
-// Auto play English when marker detected
+function playAudio(){
+
+    if(!audioUnlocked) return;
+
+    audioEN.pause();
+    audioKN.pause();
+
+    if(currentLanguage === "en"){
+        audioEN.currentTime = 0;
+        audioEN.play();
+    }else{
+        audioKN.currentTime = 0;
+        audioKN.play();
+    }
+}
+
+
+// ================= MARKER EVENTS =================
+
 const marker = document.querySelector("#marker");
 
 marker.addEventListener("markerFound", () => {
-    if(audioUnlocked){
-        playEnglish();
-    }
+
+    console.log("Marker Found");
+
+    // auto play when detected
+    setTimeout(()=>{
+        playAudio();
+    }, 500);
+
 });
 
 
