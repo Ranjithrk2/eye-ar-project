@@ -1,179 +1,34 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>AR Human Eye</title>
+<title>AR Test</title>
 
 <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
 <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
 
 <style>
-body{
-  margin:0;
-  overflow:hidden;
-  background:black;
-}
+body{margin:0;overflow:hidden;}
 </style>
 </head>
 
 <body>
 
-<a-scene
-  embedded
-  arjs="sourceType: webcam; debugUIEnabled: false;"
-  vr-mode-ui="enabled: false"
-  renderer="logarithmicDepthBuffer: true;"
->
+<a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false">
 
-<a-marker preset="hiro" id="marker">
+<a-marker preset="hiro">
 
-  <!-- MODEL CONTAINER -->
-  <a-entity id="modelContainer"
-            position="0 0 0"
-            rotation="0 0 0"
-            scale="5 5 5">
-
-      <a-entity
-        id="eyeModel"
-        gltf-model="models/eye.glb"
-        position="0 0 0"
-        rotation="0 180 0"
-        scale="1 1 1">
-      </a-entity>
-
-  </a-entity>
+<a-entity
+gltf-model="models/eye.glb"
+scale="50 50 50"
+position="0 0 0">
+</a-entity>
 
 </a-marker>
 
 <a-entity camera></a-entity>
 
 </a-scene>
-
-
-<script>
-
-//////////////////////////////////////////////////
-// VOICE EXPLANATION ABOUT HUMAN EYE
-//////////////////////////////////////////////////
-
-const explanation =
-"The human eye is a complex sensory organ that allows us to see the world around us. " +
-"Light enters through the cornea. The iris controls the pupil size. " +
-"The lens focuses light onto the retina. " +
-"The retina converts light into electrical signals. " +
-"These signals travel through the optic nerve to the brain. " +
-"The brain processes them to create the images we see.";
-
-
-function speak(){
-
-  if(!('speechSynthesis' in window)) return;
-
-  const msg = new SpeechSynthesisUtterance(explanation);
-
-  msg.rate = 0.9;
-  msg.pitch = 1;
-  msg.volume = 1;
-
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(msg);
-}
-
-
-// Speak when marker detected
-document.querySelector("#marker").addEventListener("markerFound", ()=>{
-  speak();
-});
-
-
-//////////////////////////////////////////////////
-// ROTATE + ZOOM CONTROLS
-//////////////////////////////////////////////////
-
-const container = document.getElementById("modelContainer");
-
-let isDragging = false;
-let previousX = 0;
-let previousY = 0;
-let currentScale = 5;
-let startDistance = null;
-
-
-// TOUCH START
-document.addEventListener("touchstart", (e)=>{
-
-  if(e.touches.length === 1){
-
-    isDragging = true;
-    previousX = e.touches[0].clientX;
-    previousY = e.touches[0].clientY;
-
-  }
-
-});
-
-
-// TOUCH MOVE
-document.addEventListener("touchmove", (e)=>{
-
-  // ROTATE
-  if(isDragging && e.touches.length === 1){
-
-    let deltaX = e.touches[0].clientX - previousX;
-    let deltaY = e.touches[0].clientY - previousY;
-
-    let rotation = container.getAttribute("rotation");
-
-    rotation.y += deltaX * 0.5;
-    rotation.x += deltaY * 0.5;
-
-    container.setAttribute("rotation", rotation);
-
-    previousX = e.touches[0].clientX;
-    previousY = e.touches[0].clientY;
-
-  }
-
-  // ZOOM
-  if(e.touches.length === 2){
-
-    let dx = e.touches[0].clientX - e.touches[1].clientX;
-    let dy = e.touches[0].clientY - e.touches[1].clientY;
-
-    let distance = Math.sqrt(dx*dx + dy*dy);
-
-    if(startDistance === null){
-
-      startDistance = distance;
-
-    }else{
-
-      let diff = distance - startDistance;
-
-      currentScale += diff * 0.01;
-
-      currentScale = Math.min(Math.max(currentScale, 1), 20);
-
-      container.setAttribute("scale",
-        `${currentScale} ${currentScale} ${currentScale}`);
-
-      startDistance = distance;
-    }
-
-  }
-
-});
-
-
-// TOUCH END
-document.addEventListener("touchend", ()=>{
-
-  isDragging = false;
-  startDistance = null;
-
-});
-
-</script>
 
 </body>
 </html>
