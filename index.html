@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Human Eye AR Voice</title>
+<title>Human Eye AR Kannada Voice</title>
 
 <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
@@ -23,40 +23,16 @@ body{
     background:rgba(0,0,0,0.6);
     padding:10px;
 }
-
-.controls{
-    position:absolute;
-    top:10px;
-    left:50%;
-    transform:translateX(-50%);
-    display:flex;
-    gap:10px;
-}
-
-button{
-    padding:10px 15px;
-    border:none;
-    border-radius:8px;
-    background:#00aaff;
-    color:white;
-    font-size:14px;
-}
 </style>
 </head>
 
 <body>
 
-<div class="controls">
-    <button onclick="playEnglish()">English</button>
-    <button onclick="playKannada()">Kannada</button>
-</div>
-
 <div id="info">
 👉 Tap once anywhere → Point camera at HIRO marker
 </div>
 
-<!-- AUDIO -->
-<audio id="audioEN" src="audio/eye_en.mp3" preload="auto"></audio>
+<!-- KANNADA AUDIO -->
 <audio id="audioKN" src="audio/eye_kn.mp3" preload="auto"></audio>
 
 <a-scene
@@ -95,19 +71,16 @@ arjs="sourceType: webcam; debugUIEnabled: false;"
 // ================= AUDIO SYSTEM =================
 
 let audioUnlocked = false;
-let currentLanguage = "kn"; // default Kannada (change to "en" if needed)
-
-const audioEN = document.getElementById("audioEN");
 const audioKN = document.getElementById("audioKN");
 
 function unlockAudio(){
 
-    // Play silent sound to unlock audio
-    audioEN.volume = 0;
-    audioEN.play().then(()=>{
-        audioEN.pause();
-        audioEN.currentTime = 0;
-        audioEN.volume = 1;
+    audioKN.volume = 0;
+
+    audioKN.play().then(()=>{
+        audioKN.pause();
+        audioKN.currentTime = 0;
+        audioKN.volume = 1;
         audioUnlocked = true;
         console.log("Audio unlocked");
     }).catch(()=>{});
@@ -118,46 +91,31 @@ function unlockAudio(){
 document.body.addEventListener("click", unlockAudio, { once:true });
 
 
-function playEnglish(){
-    currentLanguage = "en";
-    playAudio();
-}
-
-function playKannada(){
-    currentLanguage = "kn";
-    playAudio();
-}
-
-
 function playAudio(){
 
     if(!audioUnlocked) return;
 
-    audioEN.pause();
-    audioKN.pause();
+    audioKN.currentTime = 0;
+    audioKN.play();
 
-    if(currentLanguage === "en"){
-        audioEN.currentTime = 0;
-        audioEN.play();
-    }else{
-        audioKN.currentTime = 0;
-        audioKN.play();
-    }
 }
 
 
 // ================= MARKER EVENTS =================
 
-const marker = document.querySelector("#marker");
+window.addEventListener("load", ()=>{
 
-marker.addEventListener("markerFound", () => {
+    const marker = document.querySelector("#marker");
 
-    console.log("Marker Found");
+    marker.addEventListener("markerFound", () => {
 
-    // auto play when detected
-    setTimeout(()=>{
-        playAudio();
-    }, 500);
+        console.log("Marker Found");
+
+        setTimeout(()=>{
+            playAudio();   // auto Kannada voice
+        }, 500);
+
+    });
 
 });
 
