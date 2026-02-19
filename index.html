@@ -1,16 +1,13 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>Human Eye AR</title>
 
 <!-- AFRAME -->
-
 <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
 
-<!-- ARJS STABLE -->
-
+<!-- ARJS -->
 <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
 
 <style>
@@ -19,17 +16,18 @@ body{
     overflow:hidden;
     font-family: Arial;
 }
+
 #info{
     position:absolute;
     bottom:20px;
     width:100%;
     text-align:center;
     color:white;
-    background:rgba(0,0,0,0.5);
+    background:rgba(0,0,0,0.6);
     padding:10px;
+    font-size:18px;
 }
 </style>
-
 </head>
 
 <body>
@@ -43,45 +41,45 @@ embedded
 vr-mode-ui="enabled:false"
 renderer="logarithmicDepthBuffer:true;"
 arjs="sourceType: webcam; debugUIEnabled: false;"
-
 >
 
-<a-assets>
-    <a-asset-item id="eyeModel" src="models/eye.glb"></a-asset-item>
+<!-- ASSETS -->
+<a-assets timeout="10000">
+    <a-asset-item id="eyeModel" src="./models/eye.glb"></a-asset-item>
 </a-assets>
 
+<!-- MARKER -->
 <a-marker preset="hiro">
 
-```
-<!-- MODEL CONTAINER -->
-<a-entity id="modelContainer"
-          scale="1 1 1"
-          rotation="0 0 0">
+    <a-entity id="modelContainer"
+              scale="5 5 5"
+              rotation="0 0 0">
 
-    <a-entity
-        id="eye"
-        gltf-model="#eyeModel"
-        position="0 0 0"
-        rotation="0 0 0">
+        <a-entity
+            gltf-model="#eyeModel"
+            position="0 0 0"
+            rotation="0 0 0">
+        </a-entity>
+
     </a-entity>
-
-</a-entity>
-```
 
 </a-marker>
 
+<!-- CAMERA -->
 <a-entity camera></a-entity>
 
 </a-scene>
 
 <script>
 
+window.addEventListener("load", () => {
+
 const container = document.getElementById("modelContainer");
 
 let isDragging = false;
 let previousX = 0;
 let previousY = 0;
-let scale = 1;
+let scale = 5;
 let startDistance = null;
 
 function getDistance(touches){
@@ -136,9 +134,9 @@ document.addEventListener("touchmove", e=>{
 
             let diff = newDistance - startDistance;
 
-            scale += diff * 0.005;
+            scale += diff * 0.01;
 
-            scale = Math.min(Math.max(scale, 0.5), 3);
+            scale = Math.min(Math.max(scale, 1), 10);
 
             container.setAttribute("scale",
                 `${scale} ${scale} ${scale}`);
@@ -153,6 +151,8 @@ document.addEventListener("touchmove", e=>{
 document.addEventListener("touchend", ()=>{
     isDragging = false;
     startDistance = null;
+});
+
 });
 
 </script>
