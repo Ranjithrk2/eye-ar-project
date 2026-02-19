@@ -40,54 +40,43 @@ a-text {
 
   <!-- ===== ORBIT BUTTONS ===== -->
 
-  <!-- Cornea -->
   <a-sphere id="corneaBtn" class="clickable part"
     position="-1.4 0.8 0"
     radius="0.18"
-    color="#00ffff"
-    opacity="0.8">
-    <a-text value="Cornea" align="center" position="0 0.3 0" scale="1 1 1"></a-text>
+    color="#00ffff" opacity="0.8">
+    <a-text value="Cornea" align="center" position="0 0.3 0"></a-text>
   </a-sphere>
 
-  <!-- Iris -->
   <a-sphere id="irisBtn" class="clickable part"
     position="1.4 0.8 0"
     radius="0.18"
-    color="#00ffff"
-    opacity="0.8">
+    color="#00ffff" opacity="0.8">
     <a-text value="Iris" align="center" position="0 0.3 0"></a-text>
   </a-sphere>
 
-  <!-- Lens -->
   <a-sphere id="lensBtn" class="clickable part"
     position="-1.4 -0.8 0"
     radius="0.18"
-    color="#00ffff"
-    opacity="0.8">
+    color="#00ffff" opacity="0.8">
     <a-text value="Lens" align="center" position="0 0.3 0"></a-text>
   </a-sphere>
 
-  <!-- Retina -->
   <a-sphere id="retinaBtn" class="clickable part"
     position="1.4 -0.8 0"
     radius="0.18"
-    color="#00ffff"
-    opacity="0.8">
+    color="#00ffff" opacity="0.8">
     <a-text value="Retina" align="center" position="0 0.3 0"></a-text>
   </a-sphere>
 
-  <!-- Optic -->
   <a-sphere id="opticBtn" class="clickable part"
     position="0 -1.6 0"
     radius="0.18"
-    color="#00ffff"
-    opacity="0.8">
+    color="#00ffff" opacity="0.8">
     <a-text value="Optic" align="center" position="0 0.3 0"></a-text>
   </a-sphere>
 
 
-  <!-- ===== INFO PANEL ===== -->
-
+  <!-- INFO PANEL -->
   <a-plane id="infoPanel"
     position="0 1.9 0"
     width="3.2"
@@ -109,7 +98,6 @@ a-text {
 </a-marker>
 
 
-<!-- CAMERA -->
 <a-entity camera>
   <a-cursor raycaster="objects: .clickable" color="#00ffff"></a-cursor>
 </a-entity>
@@ -120,29 +108,119 @@ a-text {
 
 <script>
 
+const model = document.querySelector("#eyeModel");
 const infoPanel = document.querySelector("#infoPanel");
 const infoText = document.querySelector("#infoText");
 
+let isDragging = false;
+let previousX = 0;
+let previousY = 0;
+let scale = 3;
+let startDistance = 0;
+
+
+// ================= ROTATE + ZOOM =================
+
+window.addEventListener("mousedown", startDrag);
+window.addEventListener("mousemove", drag);
+window.addEventListener("mouseup", endDrag);
+
+window.addEventListener("touchstart", startDrag, { passive:false });
+window.addEventListener("touchmove", drag, { passive:false });
+window.addEventListener("touchend", endDrag);
+
+
+function startDrag(e){
+
+  if(e.touches && e.touches.length === 2){
+    startDistance = getDistance(e.touches[0], e.touches[1]);
+    return;
+  }
+
+  isDragging = true;
+
+  if(e.touches){
+    previousX = e.touches[0].clientX;
+    previousY = e.touches[0].clientY;
+  } else {
+    previousX = e.clientX;
+    previousY = e.clientY;
+  }
+}
+
+
+function drag(e){
+
+  e.preventDefault();
+
+  // PINCH ZOOM
+  if(e.touches && e.touches.length === 2){
+
+    let newDistance = getDistance(e.touches[0], e.touches[1]);
+    let diff = newDistance - startDistance;
+
+    scale += diff * 0.01;
+
+    if(scale < 1.5) scale = 1.5;
+    if(scale > 6) scale = 6;
+
+    model.setAttribute("scale", `${scale} ${scale} ${scale}`);
+
+    startDistance = newDistance;
+    return;
+  }
+
+  if(!isDragging) return;
+
+  let currentX = e.touches ? e.touches[0].clientX : e.clientX;
+  let currentY = e.touches ? e.touches[0].clientY : e.clientY;
+
+  let deltaX = currentX - previousX;
+  let deltaY = currentY - previousY;
+
+  let rotation = model.getAttribute("rotation");
+
+  rotation.y += deltaX * 0.6;
+  rotation.x += deltaY * 0.6;
+
+  model.setAttribute("rotation", rotation);
+
+  previousX = currentX;
+  previousY = currentY;
+}
+
+
+function endDrag(){
+  isDragging = false;
+}
+
+
+function getDistance(t1, t2){
+  let dx = t1.clientX - t2.clientX;
+  let dy = t1.clientY - t2.clientY;
+  return Math.sqrt(dx*dx + dy*dy);
+}
+
+
+
+// ================= INFO DATA =================
+
 const partsInfo = {
 
-  corneaBtn:
-  "Cornea: The transparent front surface of the eye that helps focus incoming light.",
+  corneaBtn: "Cornea: The transparent front surface that helps focus incoming light.",
 
-  irisBtn:
-  "Iris: The colored part of the eye that controls the size of the pupil and amount of light entering.",
+  irisBtn: "Iris: The colored part controlling how much light enters the eye.",
 
-  lensBtn:
-  "Lens: A flexible structure that focuses light onto the retina for clear vision.",
+  lensBtn: "Lens: Focuses light onto the retina for clear vision.",
 
-  retinaBtn:
-  "Retina: A light sensitive layer that converts light into electrical signals.",
+  retinaBtn: "Retina: Converts light into electrical signals sent to the brain.",
 
-  opticBtn:
-  "Optic Nerve: Carries visual information from the retina to the brain."
+  opticBtn: "Optic Nerve: Carries visual signals from the eye to the brain."
 };
 
 
-// ===== SPEECH =====
+
+// ================= SPEECH =================
 
 function speak(message){
 
@@ -150,15 +228,13 @@ function speak(message){
 
   const speech = new SpeechSynthesisUtterance(message);
   speech.rate = 0.9;
-  speech.pitch = 1;
-  speech.volume = 1;
 
   window.speechSynthesis.speak(speech);
 }
 
 
 
-// ===== SHOW INFO =====
+// ================= SHOW INFO =================
 
 function showInfo(id){
 
@@ -175,7 +251,7 @@ function showInfo(id){
 
 
 
-// ===== GLOW EFFECT =====
+// ================= GLOW =================
 
 function glowEffect(id){
 
@@ -192,7 +268,7 @@ function glowEffect(id){
 
 
 
-// ===== CLICK EVENTS =====
+// ================= CLICK EVENTS =================
 
 Object.keys(partsInfo).forEach(id => {
 
@@ -208,15 +284,6 @@ Object.keys(partsInfo).forEach(id => {
 });
 
 
-
-// ===== HIDE PANEL WHEN MARKER LOST =====
-
-document.querySelector("#marker").addEventListener("markerLost", ()=>{
-
-  infoPanel.setAttribute("visible", false);
-  infoText.setAttribute("visible", false);
-
-});
 
 </script>
 
