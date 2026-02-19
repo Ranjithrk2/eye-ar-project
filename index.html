@@ -4,10 +4,7 @@
 <meta charset="UTF-8">
 <title>Human Eye AR Voice</title>
 
-<!-- AFRAME -->
 <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-
-<!-- ARJS -->
 <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
 
 <style>
@@ -27,30 +24,40 @@ body{
     padding:10px;
 }
 
-#voiceBtn{
+.controls{
     position:absolute;
-    bottom:80px;
+    top:10px;
     left:50%;
     transform:translateX(-50%);
-    padding:10px 20px;
-    font-size:16px;
+    display:flex;
+    gap:10px;
+}
+
+button{
+    padding:10px 15px;
     border:none;
     border-radius:8px;
     background:#00aaff;
     color:white;
+    font-size:14px;
 }
 </style>
 </head>
 
 <body>
 
-<div id="info">
-📱 Point camera at HIRO marker
+<div class="controls">
+    <button onclick="playEnglish()">English Voice</button>
+    <button onclick="playKannada()">Kannada Voice</button>
 </div>
 
-<button id="voiceBtn" onclick="speakEyeInfo()">
-🔊 Hear Explanation
-</button>
+<div id="info">
+📱 Tap screen once → Point camera at HIRO marker
+</div>
+
+<!-- AUDIO FILES -->
+<audio id="audioEN" src="audio/eye_en.mp3"></audio>
+<audio id="audioKN" src="audio/eye_kn.mp3"></audio>
 
 <a-scene
 embedded
@@ -60,13 +67,11 @@ arjs="sourceType: webcam; debugUIEnabled: false;"
 >
 
 <a-assets>
-    <!-- YOUR MODEL PATH -->
     <a-asset-item id="eyeModel" src="models/eye.glb"></a-asset-item>
 </a-assets>
 
 <a-marker preset="hiro" id="marker">
 
-    <!-- MODEL CONTAINER -->
     <a-entity id="modelContainer"
               scale="1 1 1"
               rotation="0 0 0">
@@ -74,8 +79,7 @@ arjs="sourceType: webcam; debugUIEnabled: false;"
         <a-entity
             id="eye"
             gltf-model="#eyeModel"
-            position="0 0 0"
-            rotation="0 0 0">
+            position="0 0 0">
         </a-entity>
 
     </a-entity>
@@ -88,37 +92,42 @@ arjs="sourceType: webcam; debugUIEnabled: false;"
 
 <script>
 
-// ================= VOICE =================
+// ================= AUDIO =================
 
-function speakEyeInfo() {
+let audioUnlocked = false;
 
-    const text = `
-    This is the human eye.
-    The eye is a sensory organ that helps us to see.
+const audioEN = document.getElementById("audioEN");
+const audioKN = document.getElementById("audioKN");
 
-    The cornea is the transparent front layer that focuses light.
-    The iris controls the amount of light entering the eye.
-    The retina converts light into signals sent to the brain.
-
-    Together, these parts allow us to see clearly.
-    `;
-
-    const speech = new SpeechSynthesisUtterance(text);
-
-    speech.rate = 0.9;
-    speech.pitch = 1;
-    speech.volume = 1;
-    speech.lang = "en-US";
-
-    window.speechSynthesis.cancel(); 
-    window.speechSynthesis.speak(speech);
+function unlockAudio(){
+    audioUnlocked = true;
 }
 
-// Play voice when marker detected
+// unlock on first tap
+document.body.addEventListener("click", unlockAudio, { once:true });
+
+function playEnglish(){
+    if(!audioUnlocked) return;
+    audioKN.pause();
+    audioEN.currentTime = 0;
+    audioEN.play();
+}
+
+function playKannada(){
+    if(!audioUnlocked) return;
+    audioEN.pause();
+    audioKN.currentTime = 0;
+    audioKN.play();
+}
+
+
+// Auto play English when marker detected
 const marker = document.querySelector("#marker");
 
 marker.addEventListener("markerFound", () => {
-    speakEyeInfo();
+    if(audioUnlocked){
+        playEnglish();
+    }
 });
 
 
@@ -140,9 +149,7 @@ function getDistance(touches){
     return Math.sqrt(dx*dx + dy*dy);
 }
 
-// TOUCH START
 document.addEventListener("touchstart", e=>{
-
     if(e.touches.length === 1){
         isDragging = true;
         previousX = e.touches[0].clientX;
@@ -152,15 +159,12 @@ document.addEventListener("touchstart", e=>{
     if(e.touches.length === 2){
         startDistance = getDistance(e.touches);
     }
-
 });
 
-// TOUCH MOVE
 document.addEventListener("touchmove", e=>{
 
     if(!container) return;
 
-    // ROTATE
     if(isDragging && e.touches.length === 1){
 
         let deltaX = e.touches[0].clientX - previousX;
@@ -177,7 +181,6 @@ document.addEventListener("touchmove", e=>{
         previousY = e.touches[0].clientY;
     }
 
-    // ZOOM
     if(e.touches.length === 2){
 
         let newDistance = getDistance(e.touches);
@@ -198,7 +201,6 @@ document.addEventListener("touchmove", e=>{
 
 });
 
-// TOUCH END
 document.addEventListener("touchend", ()=>{
     isDragging = false;
     startDistance = null;
