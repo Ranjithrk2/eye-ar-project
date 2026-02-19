@@ -27,12 +27,12 @@ body{
 
 <a-marker preset="hiro" id="marker">
 
-  <!-- ROTATABLE + ZOOMABLE MODEL -->
+  <!-- MODEL CONTAINER -->
   <a-entity id="modelContainer"
             rotation="0 0 0"
             scale="2 2 2">
 
-      <a-entity id="eyeModel"
+      <a-entity
         gltf-model="models/eye.glb"
         position="0 0 0"
         rotation="0 0 0">
@@ -42,26 +42,26 @@ body{
 
 </a-marker>
 
-<!-- CAMERA (NO CURSOR) -->
+<!-- CAMERA WITHOUT CURSOR -->
 <a-entity camera></a-entity>
 
 </a-scene>
 
 
-
 <script>
 
-// ======================
-// AUTO VOICE EXPLANATION
-// ======================
+//////////////////////////////////////////////////
+// VOICE EXPLANATION ABOUT HUMAN EYE
+//////////////////////////////////////////////////
 
 const explanation =
-"Human eye is a complex sensory organ. " +
-"The cornea allows light to enter. " +
-"The iris controls pupil size. " +
-"The lens focuses light onto the retina. " +
-"The retina converts light into signals. " +
-"The optic nerve sends information to the brain.";
+"The human eye is a complex and important sensory organ that allows us to see the world around us. " +
+"Light first enters through the cornea, which is the transparent front surface of the eye. " +
+"The iris controls the size of the pupil and regulates how much light enters. " +
+"Behind the pupil, the lens focuses light onto the retina at the back of the eye. " +
+"The retina converts light into electrical signals that travel through the optic nerve to the brain. " +
+"The brain then processes these signals to create the images we see. " +
+"The human eye works very similar to a camera, capturing and focusing light to produce vision.";
 
 
 function speak(){
@@ -85,10 +85,9 @@ document.querySelector("#marker").addEventListener("markerFound", ()=>{
 
 
 
-
-// ======================
+//////////////////////////////////////////////////
 // ROTATE + ZOOM CONTROLS
-// ======================
+//////////////////////////////////////////////////
 
 const container = document.getElementById("modelContainer");
 
