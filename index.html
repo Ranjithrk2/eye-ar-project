@@ -1,208 +1,87 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="kn">
 <head>
-<meta charset="UTF-8">
-<title>AR Eye Voice</title>
+  <meta charset="UTF-8">
+  <title>Kannada AI Voice Assistant</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+    }
 
-<script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
+    #container {
+      max-width: 600px;
+    }
 
-<style>
-body{
-    margin:0;
-    overflow:hidden;
-}
+    button {
+      padding: 12px 25px;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #00c6ff;
+      color: black;
+      margin-top: 20px;
+    }
 
-#info{
-    position:absolute;
-    bottom:20px;
-    width:100%;
-    text-align:center;
-    color:white;
-    background:rgba(0,0,0,0.6);
-    padding:10px;
-    font-family:Arial;
-}
-</style>
+    button:hover {
+      background: #00a2d3;
+    }
+  </style>
 </head>
 
 <body>
 
-<div id="info">
-👉 Tap screen once → Then scan HIRO marker
+<div id="container">
+  <h1>🤖 ಕನ್ನಡ AI ಸಹಾಯಕ</h1>
+  <p>ಪುಟ ತೆರೆಯುತ್ತಿದ್ದಂತೆಯೇ ಧ್ವನಿ ಪ್ರಾರಂಭವಾಗುತ್ತದೆ</p>
+
+  <button onclick="speakKannada()">ಮತ್ತೆ ಮಾತನಾಡಿ</button>
 </div>
 
-<a-scene
-embedded
-vr-mode-ui="enabled:false"
-renderer="logarithmicDepthBuffer:true;"
-arjs="sourceType: webcam; debugUIEnabled: false;"
->
-
-<a-assets>
-    <a-asset-item id="eyeModel" src="models/eye.glb"></a-asset-item>
-</a-assets>
-
-<a-marker preset="hiro" id="marker">
-
-    <a-entity id="modelContainer" scale="1 1 1">
-        <a-entity gltf-model="#eyeModel"></a-entity>
-    </a-entity>
-
-</a-marker>
-
-<a-entity camera></a-entity>
-
-</a-scene>
-
 <script>
+  function speakKannada() {
 
-// ================= VOICE SYSTEM =================
+    const text = "ನಮಸ್ಕಾರ ರಂಜಿತ್ ಕುಮಾರ್. ನಮ್ಮ AI ವ್ಯವಸ್ಥೆಗೆ ಸ್ವಾಗತ. ನಿಮಗೆ ಸಹಾಯ ಮಾಡಲು ನಾನು ಇಲ್ಲಿ ಇದ್ದೇನೆ.";
 
-let voicesLoaded = false;
-let audioUnlocked = false;
+    const speech = new SpeechSynthesisUtterance(text);
 
-// Load voices
-speechSynthesis.onvoiceschanged = () => {
-    voicesLoaded = true;
-};
+    // Kannada language
+    speech.lang = "kn-IN";
 
-// Unlock audio on first tap
-document.body.addEventListener("click", () => {
+    // Optional voice selection (if available)
+    const voices = speechSynthesis.getVoices();
+    const kannadaVoice = voices.find(v => v.lang === "kn-IN");
 
-    audioUnlocked = true;
-
-    // Dummy speak to unlock mobile audio
-    const dummy = new SpeechSynthesisUtterance(" ");
-    speechSynthesis.speak(dummy);
-
-}, { once:true });
-
-
-function speakEyeInfo(){
-
-    if(!audioUnlocked) return;
-
-    speechSynthesis.cancel();
-
-    const englishText =
-    "The human eye is an important sensory organ. It helps us to see light, colors, shapes, and movement. The main parts of the eye include the cornea, iris, pupil, lens, and retina.";
-
-    const kannadaText =
-    "ಮಾನವ ಕಣ್ಣು ಒಂದು ಪ್ರಮುಖ ಇಂದ್ರಿಯ ಅಂಗವಾಗಿದೆ. ಇದು ಬೆಳಕು, ಬಣ್ಣಗಳು, ಆಕಾರಗಳು ಮತ್ತು ಚಲನವಲನವನ್ನು ನೋಡಲು ಸಹಾಯ ಮಾಡುತ್ತದೆ. ಕಣ್ಣಿನ ಮುಖ್ಯ ಭಾಗಗಳು ಕಾರ್ನಿಯಾ, ಐರಿಸ್, ಪ್ಯುಪಿಲ್, ಲೆನ್ಸ್ ಮತ್ತು ರೆಟಿನಾ ಆಗಿವೆ.";
-
-    const english = new SpeechSynthesisUtterance(englishText);
-    english.lang = "en-US";
-    english.rate = 0.9;
-
-    const kannada = new SpeechSynthesisUtterance(kannadaText);
-    kannada.lang = "kn-IN";
-    kannada.rate = 0.9;
-
-    english.onend = () => {
-        speechSynthesis.speak(kannada);
-    };
-
-    speechSynthesis.speak(english);
-}
-
-
-// ================= MARKER DETECT =================
-
-window.addEventListener("load", ()=>{
-
-    const marker = document.querySelector("#marker");
-
-    marker.addEventListener("markerFound", () => {
-
-        console.log("Marker detected");
-
-        setTimeout(()=>{
-            speakEyeInfo();
-        }, 500);
-
-    });
-
-});
-
-
-// ================= TOUCH CONTROLS =================
-
-window.addEventListener("load", () => {
-
-const container = document.getElementById("modelContainer");
-
-let isDragging = false;
-let previousX = 0;
-let previousY = 0;
-let scale = 1;
-let startDistance = null;
-
-function getDistance(touches){
-    let dx = touches[0].clientX - touches[1].clientX;
-    let dy = touches[0].clientY - touches[1].clientY;
-    return Math.sqrt(dx*dx + dy*dy);
-}
-
-document.addEventListener("touchstart", e=>{
-    if(e.touches.length === 1){
-        isDragging = true;
-        previousX = e.touches[0].clientX;
-        previousY = e.touches[0].clientY;
+    if (kannadaVoice) {
+      speech.voice = kannadaVoice;
     }
 
-    if(e.touches.length === 2){
-        startDistance = getDistance(e.touches);
-    }
-});
+    speech.rate = 1;
+    speech.pitch = 1;
 
-document.addEventListener("touchmove", e=>{
+    speechSynthesis.speak(speech);
+  }
 
-    if(!container) return;
+  // Auto speak when page loads
+  window.onload = () => {
 
-    if(isDragging && e.touches.length === 1){
+    // Some browsers need delay
+    setTimeout(() => {
+      speakKannada();
+    }, 1000);
 
-        let deltaX = e.touches[0].clientX - previousX;
-        let deltaY = e.touches[0].clientY - previousY;
+  };
 
-        let rotation = container.getAttribute("rotation") || {x:0,y:0,z:0};
-
-        rotation.y += deltaX * 0.5;
-        rotation.x += deltaY * 0.5;
-
-        container.setAttribute("rotation", rotation);
-
-        previousX = e.touches[0].clientX;
-        previousY = e.touches[0].clientY;
-    }
-
-    if(e.touches.length === 2){
-
-        let newDistance = getDistance(e.touches);
-
-        if(startDistance){
-
-            let diff = newDistance - startDistance;
-
-            scale += diff * 0.005;
-            scale = Math.min(Math.max(scale, 0.5), 3);
-
-            container.setAttribute("scale",
-                `${scale} ${scale} ${scale}`);
-        }
-
-        startDistance = newDistance;
-    }
-
-});
-
-document.addEventListener("touchend", ()=>{
-    isDragging = false;
-    startDistance = null;
-});
-
-});
-
+  // Load voices properly
+  speechSynthesis.onvoiceschanged = () => {};
 </script>
 
 </body>
