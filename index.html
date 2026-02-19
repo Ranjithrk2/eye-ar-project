@@ -29,7 +29,7 @@ body{
 <body>
 
 <div id="info">
-👉 Tap once → Scan HIRO marker
+👉 Tap screen once → Then scan HIRO marker
 </div>
 
 <a-scene
@@ -46,12 +46,7 @@ arjs="sourceType: webcam; debugUIEnabled: false;"
 <a-marker preset="hiro" id="marker">
 
     <a-entity id="modelContainer" scale="1 1 1">
-
-        <a-entity
-            gltf-model="#eyeModel"
-            position="0 0 0">
-        </a-entity>
-
+        <a-entity gltf-model="#eyeModel"></a-entity>
     </a-entity>
 
 </a-marker>
@@ -64,11 +59,23 @@ arjs="sourceType: webcam; debugUIEnabled: false;"
 
 // ================= VOICE SYSTEM =================
 
+let voicesLoaded = false;
 let audioUnlocked = false;
 
-// Unlock speech on first tap (mobile requirement)
+// Load voices
+speechSynthesis.onvoiceschanged = () => {
+    voicesLoaded = true;
+};
+
+// Unlock audio on first tap
 document.body.addEventListener("click", () => {
+
     audioUnlocked = true;
+
+    // Dummy speak to unlock mobile audio
+    const dummy = new SpeechSynthesisUtterance(" ");
+    speechSynthesis.speak(dummy);
+
 }, { once:true });
 
 
@@ -76,23 +83,22 @@ function speakEyeInfo(){
 
     if(!audioUnlocked) return;
 
+    speechSynthesis.cancel();
+
     const englishText =
     "The human eye is an important sensory organ. It helps us to see light, colors, shapes, and movement. The main parts of the eye include the cornea, iris, pupil, lens, and retina.";
 
     const kannadaText =
     "ಮಾನವ ಕಣ್ಣು ಒಂದು ಪ್ರಮುಖ ಇಂದ್ರಿಯ ಅಂಗವಾಗಿದೆ. ಇದು ಬೆಳಕು, ಬಣ್ಣಗಳು, ಆಕಾರಗಳು ಮತ್ತು ಚಲನವಲನವನ್ನು ನೋಡಲು ಸಹಾಯ ಮಾಡುತ್ತದೆ. ಕಣ್ಣಿನ ಮುಖ್ಯ ಭಾಗಗಳು ಕಾರ್ನಿಯಾ, ಐರಿಸ್, ಪ್ಯುಪಿಲ್, ಲೆನ್ಸ್ ಮತ್ತು ರೆಟಿನಾ ಆಗಿವೆ.";
 
-    // English speech
     const english = new SpeechSynthesisUtterance(englishText);
     english.lang = "en-US";
     english.rate = 0.9;
 
-    // Kannada speech
     const kannada = new SpeechSynthesisUtterance(kannadaText);
     kannada.lang = "kn-IN";
     kannada.rate = 0.9;
 
-    // Speak English then Kannada
     english.onend = () => {
         speechSynthesis.speak(kannada);
     };
@@ -101,20 +107,26 @@ function speakEyeInfo(){
 }
 
 
-// ================= MARKER EVENT =================
+// ================= MARKER DETECT =================
 
 window.addEventListener("load", ()=>{
 
     const marker = document.querySelector("#marker");
 
     marker.addEventListener("markerFound", () => {
-        speakEyeInfo();
+
+        console.log("Marker detected");
+
+        setTimeout(()=>{
+            speakEyeInfo();
+        }, 500);
+
     });
 
 });
 
 
-// ================= TOUCH ROTATE + ZOOM =================
+// ================= TOUCH CONTROLS =================
 
 window.addEventListener("load", () => {
 
