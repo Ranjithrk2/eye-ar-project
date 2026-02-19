@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Human Eye AR</title>
+<title>Human Eye AR Voice</title>
 
 <!-- AFRAME -->
 <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
@@ -25,7 +25,19 @@ body{
     color:white;
     background:rgba(0,0,0,0.6);
     padding:10px;
-    font-size:18px;
+}
+
+#voiceBtn{
+    position:absolute;
+    bottom:80px;
+    left:50%;
+    transform:translateX(-50%);
+    padding:10px 20px;
+    font-size:16px;
+    border:none;
+    border-radius:8px;
+    background:#00aaff;
+    color:white;
 }
 </style>
 </head>
@@ -36,6 +48,10 @@ body{
 📱 Point camera at HIRO marker
 </div>
 
+<button id="voiceBtn" onclick="speakEyeInfo()">
+🔊 Hear Explanation
+</button>
+
 <a-scene
 embedded
 vr-mode-ui="enabled:false"
@@ -43,16 +59,16 @@ renderer="logarithmicDepthBuffer:true;"
 arjs="sourceType: webcam; debugUIEnabled: false;"
 >
 
-<!-- ASSETS -->
-<a-assets timeout="10000">
-    <a-asset-item id="eyeModel" src="./models/eye.glb"></a-asset-item>
+<a-assets>
+    <!-- YOUR MODEL PATH -->
+    <a-asset-item id="eyeModel" src="models/eye.glb"></a-asset-item>
 </a-assets>
 
-<!-- MARKER -->
 <a-marker preset="hiro" id="marker">
 
+    <!-- MODEL CONTAINER -->
     <a-entity id="modelContainer"
-              scale="3 3 3"
+              scale="1 1 1"
               rotation="0 0 0">
 
         <a-entity
@@ -66,12 +82,47 @@ arjs="sourceType: webcam; debugUIEnabled: false;"
 
 </a-marker>
 
-<!-- CAMERA -->
 <a-entity camera></a-entity>
 
 </a-scene>
 
 <script>
+
+// ================= VOICE =================
+
+function speakEyeInfo() {
+
+    const text = `
+    This is the human eye.
+    The eye is a sensory organ that helps us to see.
+
+    The cornea is the transparent front layer that focuses light.
+    The iris controls the amount of light entering the eye.
+    The retina converts light into signals sent to the brain.
+
+    Together, these parts allow us to see clearly.
+    `;
+
+    const speech = new SpeechSynthesisUtterance(text);
+
+    speech.rate = 0.9;
+    speech.pitch = 1;
+    speech.volume = 1;
+    speech.lang = "en-US";
+
+    window.speechSynthesis.cancel(); 
+    window.speechSynthesis.speak(speech);
+}
+
+// Play voice when marker detected
+const marker = document.querySelector("#marker");
+
+marker.addEventListener("markerFound", () => {
+    speakEyeInfo();
+});
+
+
+// ================= TOUCH CONTROLS =================
 
 window.addEventListener("load", () => {
 
@@ -80,7 +131,7 @@ const container = document.getElementById("modelContainer");
 let isDragging = false;
 let previousX = 0;
 let previousY = 0;
-let scale = 3;
+let scale = 1;
 let startDistance = null;
 
 function getDistance(touches){
@@ -135,8 +186,8 @@ document.addEventListener("touchmove", e=>{
 
             let diff = newDistance - startDistance;
 
-            scale += diff * 0.01;
-            scale = Math.min(Math.max(scale, 1), 10);
+            scale += diff * 0.005;
+            scale = Math.min(Math.max(scale, 0.5), 3);
 
             container.setAttribute("scale",
                 `${scale} ${scale} ${scale}`);
