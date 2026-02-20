@@ -57,27 +57,27 @@ arjs="sourceType: webcam; debugUIEnabled: false;"
 
 <script>
 
-// ================= VOICE SYSTEM =================
+// ================= AUDIO UNLOCK =================
 
-let voicesLoaded = false;
 let audioUnlocked = false;
+let voices = [];
 
-// Load voices
 speechSynthesis.onvoiceschanged = () => {
-    voicesLoaded = true;
+    voices = speechSynthesis.getVoices();
 };
 
-// Unlock audio on first tap
+// unlock on first tap
 document.body.addEventListener("click", () => {
 
     audioUnlocked = true;
 
-    // Dummy speak to unlock mobile audio
     const dummy = new SpeechSynthesisUtterance(" ");
     speechSynthesis.speak(dummy);
 
 }, { once:true });
 
+
+// ================= SPEAK FUNCTION =================
 
 function speakEyeInfo(){
 
@@ -98,6 +98,10 @@ function speakEyeInfo(){
     const kannada = new SpeechSynthesisUtterance(kannadaText);
     kannada.lang = "kn-IN";
     kannada.rate = 0.9;
+
+    // Try to find Kannada voice
+    const kannadaVoice = voices.find(v => v.lang.includes("kn"));
+    if(kannadaVoice) kannada.voice = kannadaVoice;
 
     english.onend = () => {
         speechSynthesis.speak(kannada);
