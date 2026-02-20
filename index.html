@@ -7,10 +7,7 @@
 <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
 
 <style>
-body{
-    margin:0;
-    overflow:hidden;
-}
+body{ margin:0; overflow:hidden; }
 
 #info{
     position:absolute;
@@ -41,6 +38,8 @@ webxr="requiredFeatures: hit-test"
 <a-asset-item id="eyeModel" src="models/eye.glb"></a-asset-item>
 </a-assets>
 
+<a-camera id="camera" position="0 1.6 0"></a-camera>
+
 <a-entity id="modelContainer"
           scale="0.5 0.5 0.5"
           visible="false">
@@ -49,49 +48,34 @@ webxr="requiredFeatures: hit-test"
 
 </a-entity>
 
-<a-camera position="0 1.6 0"></a-camera>
-
 </a-scene>
 
 <script>
 
-// ================= VOICE SYSTEM =================
+const scene = document.querySelector("a-scene");
+const container = document.getElementById("modelContainer");
+const camera = document.getElementById("camera");
 
-let audioUnlocked = false;
+let xrSession = null;
+let hitTestSource = null;
+let placed = false;
 
-document.body.addEventListener("click", () => {
 
-    audioUnlocked = true;
-
-    // unlock audio
-    const dummy = new SpeechSynthesisUtterance(" ");
-    speechSynthesis.speak(dummy);
-
-    placeModel();
-    speakEyeInfo();
-
-}, { once:true });
-
+// ================= VOICE =================
 
 function speakEyeInfo(){
 
-    if(!audioUnlocked) return;
-
-    speechSynthesis.cancel();
-
     const englishText =
-    "The human eye is an important sensory organ. It helps us to see light, colors, shapes, and movement. The main parts of the eye include the cornea, iris, pupil, lens, and retina.";
+    "The human eye is an important sensory organ. It helps us to see light, colors, shapes, and movement.";
 
     const kannadaText =
-    "ಮಾನವ ಕಣ್ಣು ಒಂದು ಪ್ರಮುಖ ಇಂದ್ರಿಯ ಅಂಗವಾಗಿದೆ. ಇದು ಬೆಳಕು, ಬಣ್ಣಗಳು, ಆಕಾರಗಳು ಮತ್ತು ಚಲನವಲನವನ್ನು ನೋಡಲು ಸಹಾಯ ಮಾಡುತ್ತದೆ. ಕಣ್ಣಿನ ಮುಖ್ಯ ಭಾಗಗಳು ಕಾರ್ನಿಯಾ, ಐರಿಸ್, ಪ್ಯುಪಿಲ್, ಲೆನ್ಸ್ ಮತ್ತು ರೆಟಿನಾ ಆಗಿವೆ.";
+    "ಮಾನವ ಕಣ್ಣು ಒಂದು ಪ್ರಮುಖ ಇಂದ್ರಿಯ ಅಂಗವಾಗಿದೆ. ಇದು ಬೆಳಕು, ಬಣ್ಣಗಳು ಮತ್ತು ಆಕಾರಗಳನ್ನು ನೋಡಲು ಸಹಾಯ ಮಾಡುತ್ತದೆ.";
 
     const english = new SpeechSynthesisUtterance(englishText);
     english.lang = "en-US";
-    english.rate = 0.9;
 
     const kannada = new SpeechSynthesisUtterance(kannadaText);
     kannada.lang = "kn-IN";
-    kannada.rate = 0.9;
 
     english.onend = () => {
         speechSynthesis.speak(kannada);
@@ -101,93 +85,58 @@ function speakEyeInfo(){
 }
 
 
-// ================= PLACE MODEL =================
+// ================= AR HIT TEST =================
 
-const container = document.getElementById("modelContainer");
+scene.addEventListener("enter-vr", async () => {
 
-function placeModel(){
+    xrSession = scene.renderer.xr.getSession();
 
-    container.setAttribute("visible", true);
-
-    // place in front of camera
-    container.setAttribute("position", "0 0 -1.5");
-
-}
-
-
-// ================= TOUCH CONTROLS =================
-
-let isDragging = false;
-let previousX = 0;
-let previousY = 0;
-let scale = 0.5;
-let startDistance = null;
-
-function getDistance(touches){
-    let dx = touches[0].clientX - touches[1].clientX;
-    let dy = touches[0].clientY - touches[1].clientY;
-    return Math.sqrt(dx*dx + dy*dy);
-}
-
-document.addEventListener("touchstart", e=>{
-
-    if(e.touches.length === 1){
-        isDragging = true;
-        previousX = e.touches[0].clientX;
-        previousY = e.touches[0].clientY;
-    }
-
-    if(e.touches.length === 2){
-        startDistance = getDistance(e.touches);
-    }
+    const viewerSpace = await xrSession.requestReferenceSpace("viewer");
+    hitTestSource = await xrSession.requestHitTestSource({
+        space: viewerSpace
+    });
 
 });
 
-document.addEventListener("touchmove", e=>{
 
-    if(!container) return;
-
-    // ROTATE
-    if(isDragging && e.touches.length === 1){
-
-        let deltaX = e.touches[0].clientX - previousX;
-        let deltaY = e.touches[0].clientY - previousY;
-
-        let rotation = container.getAttribute("rotation") || {x:0,y:0,z:0};
-
-        rotation.y += deltaX * 0.5;
-        rotation.x += deltaY * 0.5;
-
-        container.setAttribute("rotation", rotation);
-
-        previousX = e.touches[0].clientX;
-        previousY = e.touches[0].clientY;
-    }
-
-    // ZOOM
-    if(e.touches.length === 2){
-
-        let newDistance = getDistance(e.touches);
-
-        if(startDistance){
-
-            let diff = newDistance - startDistance;
-
-            scale += diff * 0.005;
-            scale = Math.min(Math.max(scale, 0.2), 2);
-
-            container.setAttribute("scale",
-                `${scale} ${scale} ${scale}`);
-        }
-
-        startDistance = newDistance;
-    }
-
+scene.renderer.xr.addEventListener("sessionend", () => {
+    hitTestSource = null;
 });
 
-document.addEventListener("touchend", ()=>{
-    isDragging = false;
-    startDistance = null;
+
+// ================= TAP TO PLACE =================
+
+scene.addEventListener("click", () => {
+
+    if (placed) return;
+
+    const xrFrame = scene.frame;
+
+    if (!xrFrame || !hitTestSource) return;
+
+    const referenceSpace =
+        scene.renderer.xr.getReferenceSpace();
+
+    const hitTestResults =
+        xrFrame.getHitTestResults(hitTestSource);
+
+    if (hitTestResults.length > 0) {
+
+        const hit = hitTestResults[0];
+        const pose = hit.getPose(referenceSpace);
+
+        const pos = pose.transform.position;
+
+        container.setAttribute("position",
+            `${pos.x} ${pos.y} ${pos.z}`);
+
+        container.setAttribute("visible", true);
+
+        speakEyeInfo();
+
+        placed = true;
+    }
+
 });
 
 </script>
